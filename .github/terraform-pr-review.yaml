@@ -1,0 +1,135 @@
+on:
+  workflow_dispatch:
+    inputs:
+      terraform-version:
+        required: true
+        type: string
+        
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      working-directory: terraform
+      TF_WORKSPACE: my-workspace
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.DSC_TF_INTEG_APP_ID }}
+          installation_id: ${{ secrets.DSC_TF_INTEG_INSTALLATION_ID}}
+          private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
+
+      - name: Check out code
+        uses: actions/checkout@v2
+        
+      - name: Run Terrascan
+        id: terrascan
+        uses: accurics/terrascan-action@main
+        with:
+          iac_type: 'terraform'
+          iac_version: 'v14'
+          policy_type: 'aws'
+          only_warn: true
+          iac_dir: infrastructure
+        #sarif_upload: true
+        #non_recursive:
+        #iac_dir:
+        #policy_path:
+        #skip_rules:
+        #config_path:
+
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+
+      - name: Terraform Fmt
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+        
+      - name: Terraform init
+        id: init
+        run: terraform init
+        working-directory: ${{ env.working-directory }}
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -no-color
+        working-directory: ${{ env.working-directory }}
+        env:
+          TF_VAR_app_id: ${{ secrets.DSC_TF_INTEG_APP_ID }}
+          TF_VAR_installation_id: ${{ secrets.DSC_TF_INTEG_INSTALLATION_ID }}
+          TF_VAR_private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
+      - name: Plan output
+        id: output
+        uses: actions/github-script@v3
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            ### Workspace
+
+            \`${process.env.TF_WORKSPACE}\`
+
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            <details><summary>Show Plan</summary>
+
+            \`\`\`hcl
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            **Pusher**: @${{ github.actor }}
+            **Action**: ${{ github.event_name }}
+            `;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      # - name: Terraform apply
+      #   id: apply
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #   run: terraform apply -auto-approve -input=false
+      #   working-directory: ${{ env.working-directory }}
+      #   env:
+      #     TF_VAR_assume_role: "my-github-actions-role"
+
+      # - name: Infrastructure tests Output
+      #   if: always()      
+      #   uses: actions/github-script@v3
+      #   env:
+      #     INSPEC: "Inspec Test Results \n${{ steps.inspec_results.outputs.loginspec }}"
+      #   with:
+      #     github-token: ${{secrets.GITHUB_TOKEN}}
+      #     script: |
+      #       const output = `#### Inspec Tests 🖌\`${{ steps.inspec.outcome }}\`
+
+      #       <details><summary>Show Test Results</summary>
+
+      #       \`\`\`
+
+      #       ${process.env.INSPEC}
+      #       \`\`\`
+           
+      #       </details>
+
+      #       `;
+      #       github.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
