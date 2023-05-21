@@ -53,39 +53,6 @@ jobs:
           TF_VAR_private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
           TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
           
-      - name: Plan output
-        id: output
-        uses: actions/github-script@v3
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        with:
-          github-token: ${{ steps.generate_token.outputs.token }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            ### Workspace
-
-            \`FPTU DSC GitHub Terraform Member Management\`
-
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-
-            \`\`\`hcl
-            ${process.env.PLAN}
-            \`\`\`
-
-            </details>
-
-            **Pusher**: @${{ github.actor }}
-            **Action**: ${{ github.event_name }}
-            `;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
       - name: Upload plan
         uses: actions/upload-artifact@v3
         with:
@@ -104,8 +71,6 @@ jobs:
   Apply:
     runs-on: ubuntu-latest
     needs: [plan,approval-request]
-    environment:
-      name: ${{ inputs.deploy_environment }}
     name: "Apply Terraform"
     steps:
       - name: Check out code
@@ -114,7 +79,7 @@ jobs:
         uses: actions/download-artifact@v3
         with: 
           name: terraform-plan.out
-          path: terraform-plan.out
+          path: .
       - name: Terraform init
         id: init
         run: terraform init
