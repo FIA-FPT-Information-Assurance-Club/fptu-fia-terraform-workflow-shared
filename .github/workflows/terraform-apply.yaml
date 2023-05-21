@@ -36,6 +36,8 @@ jobs:
       - name: Terraform init
         id: init
         run: terraform init
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
 
       - name: Terraform validate
         id: validate
@@ -49,7 +51,7 @@ jobs:
           TF_VAR_app_id: ${{ secrets.DSC_TF_INTEG_APP_ID }}
           TF_VAR_installation_id: ${{ secrets.DSC_TF_INTEG_INSTALLATION_ID }}
           TF_VAR_private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
-          TF_VAR_terraform_cloud_token: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
           
       - name: Plan output
         id: output
@@ -116,6 +118,8 @@ jobs:
       - name: Terraform init
         id: init
         run: terraform init
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
       - name: Terraform apply
         id: apply
         run: terraform apply --auto-approve --input=false --lock=true terraform-plan.out
