@@ -2,6 +2,7 @@ on:
   workflow_dispatch:
     inputs:
       terraform-version:
+        description: "Terraform version to use"
         required: true
         type: string
         
