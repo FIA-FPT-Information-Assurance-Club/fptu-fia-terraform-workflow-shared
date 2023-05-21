@@ -45,7 +45,7 @@ jobs:
           TF_VAR_app_id: ${{ secrets.DSC_TF_INTEG_APP_ID }}
           TF_VAR_installation_id: ${{ secrets.DSC_TF_INTEG_INSTALLATION_ID }}
           TF_VAR_private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
-          TF_VAR_terraform_cloud_token: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
+          TFE_TOKEN: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
 
       - name: Plan output
         id: output
