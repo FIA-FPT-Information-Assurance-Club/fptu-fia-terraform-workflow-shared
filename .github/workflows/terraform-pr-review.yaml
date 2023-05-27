@@ -52,7 +52,7 @@ jobs:
       - name: Plan output
         id: output
         uses: actions/github-script@v3
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && always()
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
