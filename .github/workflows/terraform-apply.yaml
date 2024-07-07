@@ -17,8 +17,8 @@ jobs:
         id: generate_token
         uses: tibdex/github-app-token@v1
         with:
-          app_id: ${{ secrets.DSC_TF_INTEG_APP_ID }}
-          installation_id: ${{ secrets.DSC_TF_INTEG_INSTALLATION_ID}}
+          app_id: ${{ secrets.FIA_APP_ID }}
+          installation_id: ${{ secrets.FIA_APP_INSTALLATION_ID }}
           private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
 
       - name: Check out code
@@ -37,7 +37,7 @@ jobs:
         id: init
         run: terraform init
         env:
-          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API_TOKEN }}
 
       - name: Terraform validate
         id: validate
@@ -48,10 +48,10 @@ jobs:
         run: |
           terraform plan -no-color -out terraform-plan.out
         env:
-          TF_VAR_app_id: ${{ secrets.DSC_TF_INTEG_APP_ID }}
-          TF_VAR_installation_id: ${{ secrets.DSC_TF_INTEG_INSTALLATION_ID }}
+          TF_VAR_app_id: ${{ secrets.FIA_APP_ID }}
+          TF_VAR_installation_id: ${{ secrets.FIA_APP_INSTALLATION_ID }}
           TF_VAR_private_key: ${{ secrets.DSC_TF_INTEG_PRIVATE_KEY }}
-          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API_TOKEN }}
           
       - name: Upload plan
         uses: actions/upload-artifact@v3
@@ -84,12 +84,12 @@ jobs:
         id: init
         run: terraform init
         env:
-          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API_TOKEN }}
       - name: Terraform apply
         id: apply
         run: terraform apply --auto-approve --input=false --lock=true terraform-plan.out
         env:
-          TF_TOKEN_app_terraform_io: ${{ secrets.DSC_TF_INTEG_TERRAFORM_CLOUD_TOKEN }}
+          TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_CLOUD_API_TOKEN }}
 
       # - name: Terraform apply
       #   id: apply
